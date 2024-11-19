@@ -38,5 +38,35 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:hootId', async (req, res) => {})
+router.get('/:hootId', async (req, res) => {
+    try{
+        const hoot = await Hoot.findById(req.params.hootId).populate('author');
+        res.status(200).json(hoot);
+    }catch (error) {
+        res.status(500).json(error)
+    }
+})
+
+router.put('/:hootId', async (req,res) => {
+    try {
+
+        const hoot = await Hoot.findById(req.params.hootId);
+// Check permission:
+        if(!hoot.author.equals(req.user._id)) {
+            return res.status(403).send("Youre not allowed to do that")
+        }
+// update and return new hoot:
+        const updatedHoot = await Hoot.findByIdAndUpdate(
+            req.params.hootId,
+            req.body,
+            {new: true}
+        );
+//append req.user to the author proeprty: 
+
+        updatedHoot._doc.author = req.user;
+        res.status(200).json(updatedHoot)
+    }catch (error) {
+        res.status(500).json(error)
+    }
+})
 module.exports = router;
